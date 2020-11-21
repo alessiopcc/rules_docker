@@ -189,7 +189,8 @@ def incremental_load(
         output,
         stamp = False,
         run = False,
-        run_flags = None):
+        run_flags = None,
+        windows = False):
     """Generate the incremental load statement.
 
 
@@ -264,11 +265,15 @@ def incremental_load(
                 "\"${DOCKER}\" ${DOCKER_FLAGS} run %s %s" % (run_flags, tag_reference),
             ]
 
+    docker_path = "\"" + toolchain_info.tool_path + "\""
+    if windows:
+        docker_path = "$(wslpath -a %s)" % docker_path
+
     ctx.actions.expand_template(
         template = ctx.file.incremental_load_template,
         substitutions = {
             "%{docker_flags}": " ".join(toolchain_info.docker_flags),
-            "%{docker_tool_path}": toolchain_info.tool_path,
+            "%{docker_tool_path}": docker_path,
             "%{load_statements}": "\n".join(load_statements),
             "%{run_statements}": "\n".join(run_statements),
             "%{run}": str(run),

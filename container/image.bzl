@@ -500,6 +500,7 @@ def _impl(
         build_executable,
         run = not ctx.attr.legacy_run_behavior,
         run_flags = docker_run_flags,
+        windows = True,
     )
 
     _assemble_image(
@@ -521,8 +522,26 @@ def _impl(
         command = "cp %s %s" % (config_digest.path, output_config_digest.path),
     )
 
+    additional_runfiles = []
+
+    if ctx.attr.windows_template:
+        additional_runfiles += [build_executable]
+
+        executable_path = build_executable.short_path
+
+        build_executable = ctx.actions.declare_file(build_executable.basename + ".bat")
+
+        ctx.actions.expand_template(
+            template = ctx.file.windows_template,
+            output = build_executable,
+            substitutions = {
+                "%{executable_path}": executable_path,
+            },
+            is_executable = True,
+        )
+
     runfiles = ctx.runfiles(
-        files = unzipped_layers + diff_ids + [config_file, config_digest, output_config_digest] +
+        files = unzipped_layers + diff_ids + [config_file, config_digest, output_config_digest] + additional_runfiles +
                 ([container_parts["legacy"]] if container_parts["legacy"] else []),
     )
 
@@ -594,6 +613,7 @@ _attrs = dicts.add(_layer.attrs, {
         cfg = "host",
         executable = True,
     ),
+    "windows_template": attr.label(default = None, allow_single_file = True),
 }, _hash_tools, _layer_tools)
 
 _outputs = dict(_layer.outputs)
@@ -823,5 +843,11 @@ def container_image(**kwargs):
                 kwargs["entrypoint"] = []
         else:
             kwargs["entrypoint"] = _validate_command("entrypoint", kwargs["entrypoint"], operating_system)
+
+    if not kwargs["windows_template"]:
+        kwargs["windows_template"] = select({
+            "@bazel_tools//src/conditions:host_windows": Label("//container:incremental_load.bat.tpl"),
+            "//conditions:default": None,
+        })
 
     container_image_(**kwargs)

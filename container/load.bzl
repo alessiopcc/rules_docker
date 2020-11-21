@@ -37,13 +37,36 @@ container_import(
     if repository_ctx.os.name.lower().startswith("mac os"):
         loader = repository_ctx.attr._loader_darwin
 
-    result = repository_ctx.execute([
-        repository_ctx.path(loader),
+    loader_path = repository_ctx.path(loader)
+    directory_path = repository_ctx.path("image")
+    tarball_path = repository_ctx.path(repository_ctx.attr.file)
+
+    args = []
+
+    if repository_ctx.os.name.lower().startswith("windows"):
+        args += ["wsl"]
+
+        wsl_loader = repository_ctx.execute(["wsl", "wslpath", "-a", loader_path])
+        if not wsl_loader.return_code:
+            loader_path = wsl_loader.stdout.strip()
+
+        wsl_directory = repository_ctx.execute(["wsl", "wslpath", "-a", directory_path])
+        if not wsl_directory.return_code:
+            directory_path = wsl_directory.stdout.strip()
+
+        wsl_tarball = repository_ctx.execute(["wsl", "wslpath", "-a", tarball_path])
+        if not wsl_tarball.return_code:
+            tarball_path = wsl_tarball.stdout.strip()
+
+    args += [
+        loader_path,
         "-directory",
-        repository_ctx.path("image"),
+        directory_path,
         "-tarball",
-        repository_ctx.path(repository_ctx.attr.file),
-    ])
+        tarball_path,
+    ]
+
+    result = repository_ctx.execute(args)
 
     if result.return_code:
         fail("Importing from tarball failed (status %s): %s" % (result.return_code, result.stderr))

@@ -101,10 +101,26 @@ def _impl(repository_ctx):
     if repository_ctx.os.name.lower().startswith("mac os"):
         puller = repository_ctx.attr.puller_darwin
 
-    args = [
-        repository_ctx.path(puller),
+    puller_path = repository_ctx.path(puller)
+    directory_path = repository_ctx.path("image")
+
+    args = []
+
+    if repository_ctx.os.name.lower().startswith("windows"):
+        args += ["wsl"]
+
+        wsl_puller = repository_ctx.execute(["wsl", "wslpath", "-a", puller_path])
+        if not wsl_puller.return_code:
+            puller_path = wsl_puller.stdout.strip()
+
+        wsl_directory = repository_ctx.execute(["wsl", "wslpath", "-a", directory_path])
+        if not wsl_directory.return_code:
+            directory_path = wsl_directory.stdout.strip()
+
+    args += [
+        puller_path,
         "-directory",
-        repository_ctx.path("image"),
+        directory_path,
         "-os",
         repository_ctx.attr.os,
         "-os-version",

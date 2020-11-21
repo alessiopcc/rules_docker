@@ -31,7 +31,7 @@ function guess_runfiles() {
 
 RUNFILES="${PYTHON_RUNFILES:-$(guess_runfiles)}"
 
-DOCKER="%{docker_tool_path}"
+DOCKER=%{docker_tool_path}
 DOCKER_FLAGS="%{docker_flags}"
 
 if [[ -z "${DOCKER}" ]]; then

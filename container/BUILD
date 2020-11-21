@@ -21,6 +21,7 @@ licenses(["notice"])  # Apache 2.0
 exports_files([
     "push-tag.bat.tpl",
     "push-tag.sh.tpl",
+    "incremental_load.bat.tpl",
 ])
 
 filegroup(

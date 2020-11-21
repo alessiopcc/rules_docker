@@ -285,6 +285,12 @@ _app_layer = rule(
 # Convenience function that instantiates the _app_layer rule and returns
 # the name (useful when chaining layers).
 def app_layer(name, **kwargs):
+    if "windows_template" not in kwargs:
+        kwargs["windows_template"] = select({
+            "@bazel_tools//src/conditions:host_windows": Label("//container:incremental_load.bat.tpl"),
+            "//conditions:default": None,
+        })
+
     _app_layer(name = name, **kwargs)
     return name
 
