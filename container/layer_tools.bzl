@@ -189,8 +189,7 @@ def incremental_load(
         output,
         stamp = False,
         run = False,
-        run_flags = None,
-        windows = False):
+        run_flags = None):
     """Generate the incremental load statement.
 
 
@@ -266,7 +265,7 @@ def incremental_load(
             ]
 
     docker_path = "\"" + toolchain_info.tool_path + "\""
-    if windows:
+    if ctx.configuration.host_path_separator == ";":
         docker_path = "$(wslpath -a %s)" % docker_path
 
     ctx.actions.expand_template(

@@ -500,7 +500,6 @@ def _impl(
         build_executable,
         run = not ctx.attr.legacy_run_behavior,
         run_flags = docker_run_flags,
-        windows = True,
     )
 
     _assemble_image(
